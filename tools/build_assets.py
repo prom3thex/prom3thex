@@ -29,46 +29,49 @@ def build_banner(source_path: Path, output_path: Path) -> None:
 
     # The backdrop reuses only the source photograph, with enough blur and
     # darkening to create clean negative space without synthesizing scenery.
-    background_crop = source.crop((0, 0, width, round(height * 0.55)))
+    background_crop = source.crop((0, 0, width, round(height * 0.50)))
     background = _cover(background_crop, BANNER_SIZE)
-    background = background.filter(ImageFilter.GaussianBlur(radius=24))
-    background = ImageEnhance.Color(background).enhance(0.82)
-    background = ImageEnhance.Contrast(background).enhance(1.08)
-    background = ImageEnhance.Brightness(background).enhance(0.46)
+    background = background.filter(ImageFilter.GaussianBlur(radius=28))
+    background = ImageEnhance.Color(background).enhance(0.80)
+    background = ImageEnhance.Contrast(background).enhance(1.10)
+    background = ImageEnhance.Brightness(background).enhance(0.42)
 
     canvas = background.convert("RGBA")
 
-    # Keep the human likeness untouched apart from crop, resize, and restrained
-    # tonal grading. The crop is normalized so the recipe scales with the input.
+    # Mirror the avatar's identity crop so the face, cybernetic details, and
+    # composed three-quarter expression stay consistent across both assets.
     portrait_crop = source.crop(
         (
-            round(width * 0.12),
+            round(width * 0.16),
             round(height * 0.045),
-            round(width * 0.96),
-            round(height * 0.51),
+            round(width * 0.87),
+            round(height * 0.445),
         )
     )
-    portrait_crop = ImageEnhance.Color(portrait_crop).enhance(0.94)
-    portrait_crop = ImageEnhance.Contrast(portrait_crop).enhance(1.04)
-    portrait = ImageOps.contain(
+    portrait_crop = ImageEnhance.Color(portrait_crop).enhance(0.98)
+    portrait_crop = ImageEnhance.Contrast(portrait_crop).enhance(1.07)
+    portrait_crop = ImageEnhance.Sharpness(portrait_crop).enhance(1.12)
+    portrait_crop = ImageOps.mirror(portrait_crop)
+    portrait = ImageOps.fit(
         portrait_crop,
-        (540, BANNER_SIZE[1]),
+        (500, BANNER_SIZE[1]),
         method=Image.Resampling.LANCZOS,
+        centering=(0.50, 0.46),
     ).convert("RGBA")
 
     # Feather only the rectangular source boundary; no subject segmentation or
     # generative fill is used.
     mask = Image.new("L", portrait.size, 0)
-    inset_x = max(12, round(portrait.width * 0.06))
-    inset_y = max(8, round(portrait.height * 0.025))
+    inset_x = max(10, round(portrait.width * 0.03))
+    inset_y = max(6, round(portrait.height * 0.015))
     ImageDraw.Draw(mask).rounded_rectangle(
         (inset_x, inset_y, portrait.width - inset_x, portrait.height - inset_y),
-        radius=28,
+        radius=22,
         fill=255,
     )
-    mask = mask.filter(ImageFilter.GaussianBlur(radius=22))
+    mask = mask.filter(ImageFilter.GaussianBlur(radius=14))
     portrait.putalpha(mask)
-    portrait_x = BANNER_SIZE[0] - portrait.width - 78
+    portrait_x = BANNER_SIZE[0] - portrait.width - 36
     portrait_y = (BANNER_SIZE[1] - portrait.height) // 2
     canvas.alpha_composite(portrait, (portrait_x, portrait_y))
 
@@ -144,13 +147,21 @@ def parse_args() -> argparse.Namespace:
         default=Path(__file__).resolve().parents[1] / "assets",
         help="Destination directory (default: repository assets directory)",
     )
+    parser.add_argument(
+        "--only",
+        choices=("all", "banner", "avatar"),
+        default="all",
+        help="Build both assets or limit output to one asset (default: all)",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    build_banner(args.banner_source, args.output_dir / "prom3thex-banner.webp")
-    build_avatar(args.avatar_source, args.output_dir / "prom3thex-avatar-square.webp")
+    if args.only in ("all", "banner"):
+        build_banner(args.banner_source, args.output_dir / "prom3thex-banner.webp")
+    if args.only in ("all", "avatar"):
+        build_avatar(args.avatar_source, args.output_dir / "prom3thex-avatar-square.webp")
 
 
 if __name__ == "__main__":
