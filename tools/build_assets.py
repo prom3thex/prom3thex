@@ -5,11 +5,49 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageOps
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont, ImageOps
 
 
 BANNER_SIZE = (1600, 450)
 AVATAR_SIZE = (640, 640)
+
+
+def _font(size: int) -> ImageFont.FreeTypeFont:
+    """Load a clean condensed display face without adding a font dependency."""
+    candidates = (
+        Path(r"C:\Windows\Fonts\bahnschrift.ttf"),
+        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+        Path("/System/Library/Fonts/Supplemental/Arial.ttf"),
+    )
+    for candidate in candidates:
+        if candidate.is_file():
+            return ImageFont.truetype(str(candidate), size=size)
+    raise FileNotFoundError("No suitable display font found for the banner wordmark")
+
+
+def _tracked_width(
+    draw: ImageDraw.ImageDraw,
+    text: str,
+    font: ImageFont.FreeTypeFont,
+    tracking: int,
+) -> float:
+    return sum(draw.textlength(character, font=font) for character in text) + tracking * (
+        len(text) - 1
+    )
+
+
+def _draw_tracked_text(
+    draw: ImageDraw.ImageDraw,
+    position: tuple[float, float],
+    text: str,
+    font: ImageFont.FreeTypeFont,
+    tracking: int,
+    fill: tuple[int, int, int, int],
+) -> None:
+    x, y = position
+    for character in text:
+        draw.text((round(x), round(y)), character, font=font, fill=fill)
+        x += draw.textlength(character, font=font) + tracking
 
 
 def _rgb(image: Image.Image) -> Image.Image:
@@ -86,7 +124,7 @@ def build_banner(source_path: Path, output_path: Path) -> None:
             veil_pixels[x, y] = (2, 6, 4, alpha)
     canvas = Image.alpha_composite(canvas, veil)
 
-    # Minimal architectural accents: no pseudo-telemetry or baked-in microcopy.
+    # Minimal architectural accents: no pseudo-telemetry or microcopy.
     accents = Image.new("RGBA", BANNER_SIZE, (0, 0, 0, 0))
     draw = ImageDraw.Draw(accents)
     gold = (192, 140, 75, 150)
@@ -96,6 +134,36 @@ def build_banner(source_path: Path, output_path: Path) -> None:
     draw.line([(46, 72), (46, 160)], fill=green, width=1)
     draw.ellipse((41, 49, 51, 59), fill=(221, 182, 116, 185))
     draw.ellipse((41, 391, 51, 401), fill=(87, 219, 125, 150))
+
+    # The restrained two-line identity lockup fills the presentation space
+    # while keeping the portrait and its sightline visually dominant.
+    title = "PROM3THEX"
+    subtitle = "DIGITAL KNYAZ"
+    title_font = _font(70)
+    subtitle_font = _font(25)
+    title_tracking = 9
+    subtitle_tracking = 6
+    text_left = 56
+    text_right = 720
+    text_center = (text_left + text_right) / 2
+    title_width = _tracked_width(draw, title, title_font, title_tracking)
+    subtitle_width = _tracked_width(draw, subtitle, subtitle_font, subtitle_tracking)
+    _draw_tracked_text(
+        draw,
+        (text_center - title_width / 2, 166),
+        title,
+        title_font,
+        title_tracking,
+        (222, 181, 111, 242),
+    )
+    _draw_tracked_text(
+        draw,
+        (text_center - subtitle_width / 2, 254),
+        subtitle,
+        subtitle_font,
+        subtitle_tracking,
+        (111, 178, 132, 220),
+    )
     canvas = Image.alpha_composite(canvas, accents)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)

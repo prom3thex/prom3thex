@@ -4,7 +4,7 @@ Only publication-ready derived assets are stored here. The supplied PNG source i
 
 ## Files
 
-- `prom3thex-banner.webp` — 1600 × 450 WebP, used by all three profile READMEs. Derived from `ChatGPT Image 12. Aug. 2026, 03_50_30 (2).png`, the same source as the avatar candidate, using a tighter avatar-aligned crop, horizontal portrait mirroring so the subject faces the open left side, restrained clarity and tonal grading, a blurred extension of the supplied background, feathered source boundaries, and minimal geometric accents.
+- `prom3thex-banner.webp` — 1600 × 450 WebP, used by all three profile READMEs. Derived from `ChatGPT Image 12. Aug. 2026, 03_50_30 (2).png`, the same source as the avatar candidate, using a tighter avatar-aligned crop, horizontal portrait mirroring so the subject faces the open left side, restrained clarity and tonal grading, a blurred extension of the supplied background, feathered source boundaries, minimal geometric accents, and the two-line `PROM3THEX` / `DIGITAL KNYAZ` identity lockup.
 - `prom3thex-avatar-square.webp` — 640 × 640 WebP, prepared for manual GitHub avatar upload. Derived from `ChatGPT Image 12. Aug. 2026, 03_50_30 (2).png` by square cropping, resizing, and restrained tonal grading.
 
 The dense poster source `ChatGPT Image 12. Aug. 2026, 03_56_34.png` was used only as an art-direction reference and is not published here.
